@@ -3,16 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node app.js",
-    "install": "npm install && npm rebuild sqlite3"
+    "start": "node app.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "Gianinna Causa",
   "dependencies": {
+    "better-sqlite3": "^11.5.0",
     "body-parser": "^1.20.3",
-    "express": "^4.21.1",
-    "sqlite3": "^5.1.7"
+    "express": "^4.21.1"
   }
 }

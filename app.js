@@ -1,41 +1,48 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3'); // Reemplazamos sqlite3 con better-sqlite3
 const bodyParser = require('body-parser');
 
 const app = express();
-const db = new sqlite3.Database('./pets.db'); // Usamos una base de datos SQLite local
+const db = new Database('./pets.db', { verbose: console.log }); // Usamos better-sqlite3 para crear la conexión a la base de datos
 
 app.use(bodyParser.json()); // Para poder manejar los datos JSON
 
 // Crear la tabla si no existe
-db.serialize(() => {
-    db.run("CREATE TABLE IF NOT EXISTS pets (id INTEGER PRIMARY KEY, nom_masc TEXT, edad_masc INTEGER, adoptado BOOLEAN, especie_masc TEXT)");
-});
+db.prepare(`
+    CREATE TABLE IF NOT EXISTS pets (
+        id INTEGER PRIMARY KEY,
+        nom_masc TEXT,
+        edad_masc INTEGER,
+        adoptado BOOLEAN,
+        especie_masc TEXT
+    )
+`).run(); // La creación de la tabla ahora es síncrona
+
 app.get('/', (req, res) => {
     res.send('Bienvenido a la API de mascotas!');
 });
 
 // Ruta para obtener todos los animales
 app.get('/api/pets', (req, res) => {
-    db.all("SELECT * FROM pets", (err, rows) => {
-        if (err) {
-            res.status(500).send({ error: err.message });
-        } else {
-            res.json(rows);
-        }
-    });
+    try {
+        const rows = db.prepare("SELECT * FROM pets").all(); // Método síncrono para obtener todos los registros
+        res.json(rows);
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
 });
 
 // Ruta para agregar un nuevo animal
 app.post('/api/pets', (req, res) => {
-    const { name, age, vaccinated } = req.body;
-    db.run("INSERT INTO pets (nombre_masc, edad_masc, adoptado, especie_masc) VALUES (?, ?, ?, ?)", [nombre_masc, edad_masc, adoptado, especie_masc], function (err) {
-        if (err) {
-            res.status(500).send({ error: err.message });
-        } else {
-            res.status(201).send({ id: this.lastID });
-        }
-    });
+    const { nom_masc, edad_masc, adoptado, especie_masc } = req.body;
+    
+    try {
+        const stmt = db.prepare("INSERT INTO pets (nom_masc, edad_masc, adoptado, especie_masc) VALUES (?, ?, ?, ?)");
+        const result = stmt.run(nom_masc, edad_masc, adoptado, especie_masc); // Método síncrono para insertar un nuevo registro
+        res.status(201).send({ id: result.lastInsertRowid });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
 });
 
 // Iniciar el servidor en el puerto 3000
